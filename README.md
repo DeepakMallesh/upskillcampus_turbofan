@@ -1,20 +1,22 @@
-# Crop & Weed Detection
+# Turbofan Engine RUL Prediction (upskillcampus_turbofan)
 
-A computer vision / deep learning project to detect and differentiate between crops and weeds in agricultural fields. This tool aims to help automate weed control, reduce herbicide usage, and support precision farming.
+Predict Remaining Useful Life (RUL) of turbofan (jet) engines using time-series sensor data. This project ingests historical multivariate sensor readings, processes them, trains predictive models, and provides a user-facing interface for inference.
 
-## 📘 Table of Contents
+## Table of Contents
 
 - [Overview](#overview)  
-- [Features](#features)  
+- [Key Features](#key-features)  
 - [Project Structure](#project-structure)  
 - [Getting Started](#getting-started)  
   - [Prerequisites](#prerequisites)  
   - [Installation](#installation)  
-  - [Usage](#usage)  
-- [Model Training & Inference](#model-training--inference)  
-- [Streamlit App](#streamlit-app)  
-- [Datasets](#datasets)  
-- [Results & Outputs](#results--outputs)  
+  - [Data Preparation](#data-preparation)  
+  - [Training & Evaluation](#training--evaluation)  
+  - [Running Inference / Application](#running-inference--application)  
+- [Model & Methods](#model--methods)  
+- [Usage Examples](#usage-examples)  
+- [Results & Metrics](#results--metrics)  
+- [Future Work / Roadmap](#future-work--roadmap)  
 - [Contributing](#contributing)  
 - [License](#license)  
 - [Contact](#contact)
@@ -23,90 +25,77 @@ A computer vision / deep learning project to detect and differentiate between cr
 
 ## Overview
 
-Agricultural fields are often invaded by weeds, which reduce crop yield and increase maintenance cost. This project uses object detection methods to identify crops and weeds in images captured from fields, enabling automated or semi-automated weed removal.  
+Turbofan engines degrade over time, and predicting their Remaining Useful Life (RUL) is critical for condition-based maintenance and avoiding costly failures. This project experiments with time-series modeling techniques (e.g. recurrent neural networks, transformers, or gradient boosting on features) to forecast RUL given sensor histories and operational settings.
 
-The repository includes data processing, training, inference scripts, and a simple web app interface (via Streamlit) for demonstration.
+Through preprocessing, feature engineering, modeling, and deployment in a small app, this repository demonstrates an end-to-end pipeline for predictive maintenance of turbofan systems.
 
-## Features
+## Key Features
 
-- Trainable object detection model (e.g. using YOLO or similar)  
-- Inference on new images to highlight weeds vs crops  
-- Web UI for quick testing  
-- Modular scripts to adapt to different datasets or models  
+- Preprocessing pipeline for multivariate time-series sensor data  
+- Feature engineering, rolling window aggregation, normalization  
+- Model training & evaluation scripts  
+- App / interface to upload new time-series and obtain RUL predictions  
+- Modular code base so you can swap in different models or datasets  
 
 ## Project Structure
 
 
 .
-├── data/                     # raw and processed datasets
-├── models/                   # saved model weights & architectures
-├── outputs/                  # inference results, predictions, visualizations
-├── scripts/                  # helper scripts (e.g. preprocessing, utilities)
-├── streamlit_app.py          # front-end web app
-├── train_and_infer.py        # training & inference orchestration
-├── requirements.txt          # Python dependencies
-└── yolov5su.pt               # pretrained or baseline model weights
+├── data/                       # raw and processed datasets
+│   ├── raw/                    # original dataset files
+│   └── processed/              # cleaned / transformed data
+├── outputs/                    # model outputs, predictions, plots
+├── src/                        # core code (preprocessing, modeling, utils)
+│   ├── data_utils.py
+│   ├── model_utils.py
+│   ├── train.py
+│   ├── evaluate.py
+│   └── inference.py
+├── app.py                       # user interface / API for inference
+├── requirements.txt             # required Python packages
+└── README.md                    # this documentation
 
 ````
 
-- data/ — Contains your training, validation, and test image sets and annotation files.  
-- models/ — Stores trained model weights, checkpoints, model definitions.  
-- outputs/ — Where the generated prediction images, logs, and metrics are saved.  
-- scripts/ — Utility scripts (e.g. annotation parsing, image augmentations).  
-- streamlit_app.py — Runs a web front-end to upload images and display predictions.  
-- train_and_infer.py — Core script to train the model or run inference.  
-- requirements.txt — Lists all necessary Python packages.  
-- yolov5su.pt — A default / baseline model weight file included (you may replace or retrain it).
+Here’s a brief of key files / directories:
+
+- data/raw/ — Raw datasets (e.g. as provided by challenge sources)  
+- data/processed/ — Cleaned, normalized, feature-engineered data ready for modeling  
+- src/train.py — Training script (load data, train model, log metrics)  
+- src/evaluate.py — Evaluate model performance, compute metrics  
+- src/inference.py — Inference logic to predict RUL from new data  
+- app.py — Simple frontend (e.g. Flask / Streamlit) to accept new input and return RUL  
+- outputs/ — Contains model checkpoints, prediction logs, plots, metrics  
 
 ## Getting Started
 
 ### Prerequisites
 
-- Python 3.7+  
-- GPU (CUDA-enabled) is recommended for training / faster inference  
-- pip (or conda) to install packages  
+- Python 3.7 or above  
+- Standard data science / ML libraries (NumPy, pandas, scikit-learn, PyTorch / TensorFlow, etc.)  
+- (Optional) GPU for faster training  
 
 ### Installation
 
 1. Clone the repository:
 
-      git clone https://github.com/DeepakMallesh/upskillcampus_Crop-and-Weed-Detection.git
-   cd upskillcampus_Crop-and-Weed-Detection
+      git clone https://github.com/DeepakMallesh/upskillcampus_turbofan.git
+   cd upskillcampus_turbofan
 ````
 
-2. Create & activate a virtual environment (optional but recommended):
+2. (Optional but recommended) Create a virtual environment:
 
    ```bash
    python3 -m venv venv
-   source venv/bin/activate    # On Windows: venv\Scripts\activate
+   source venv/bin/activate     # on Windows: venv\Scripts\activate
    
 
-3. Install required packages:
+3. Install dependencies:
 
       pip install -r requirements.txt
    
 
-### Usage
-
-There are two main modes:
-
-* Training / inference via CLI
-* Web interface via Streamlit
-
-#### Command-Line Usage (train & inference)
-
-python train_and_infer.py --mode train --config path/to/config.yaml
-python train_and_infer.py --mode infer --input path/to/images --output outputs/
-
-You can customize config files (if supported) to set hyperparameters, augmentation, paths, etc.
-
-#### Running the Streamlit App
-
-streamlit run streamlit_app.py
-
-Then open the provided local URL (e.g. http://localhost:8501) in your browser. You’ll see a simple interface to upload an image and get predictions.
-
-## Model Training & Inference
+### Data Preparation
 * Place raw dataset files (e.g. from C-MAPSS or other turbofan RUL datasets) into data/raw/.
 * Run preprocessing / feature engineering scripts in src/data_utils.py (or a wrapper) to produce cleaned, normalized data in data/processed/.
 * Ensure train/validation/test splits are defined (e.g. by engine id, cycles) for reliable evaluation.
@@ -217,3 +206,4 @@ If you’d like to reach out:
 * Author: Deepak Mallesh
 * GitHub: [DeepakMallesh](https://github.com/DeepakMallesh)
 * Email: [Deepak M](mailto:deepakmallesh2004@gmail.com)
+
